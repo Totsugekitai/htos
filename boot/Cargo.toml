@@ -1,7 +1,7 @@
 [package]
 name = "htloader"
 version = "0.1.0"
-authors = ["totsugekitai"]
+authors = ["Totsugekitai <37617413+Totsugekitai@users.noreply.github.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 uefi = "0.11.0"
 rlibc = "1"
+htlib = {path = "../lib"}
