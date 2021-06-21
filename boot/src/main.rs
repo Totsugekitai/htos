@@ -2,14 +2,11 @@
 #![no_main]
 #![feature(abi_efiapi)]
 
-#[macro_use]
-extern crate alloc;
-
 use core::{fmt::Write, panic::PanicInfo};
 use uefi::prelude::*;
 use uefi::proto::console::gop::GraphicsOutput;
 use uefi::proto::media::{fs::SimpleFileSystem, file::*};
-use htlib::boot::BootInfo;
+use htlib::{boot::BootInfo, elf::*};
 use uefi::table::boot::MemoryType;
 
 #[entry]
@@ -20,10 +17,10 @@ fn efi_main(_handle: Handle, st: SystemTable<Boot>) -> Status {
 
     let mut boot_info : BootInfo = Default::default();
 
-    let boot_services = st.boot_services();
+    let bs = st.boot_services();
 
     // initialize Graphics
-    if let Ok(gop) = boot_services.locate_protocol::<GraphicsOutput>() {
+    if let Ok(gop) = bs.locate_protocol::<GraphicsOutput>() {
         let gop = gop.unwrap();
         let gop = unsafe { &mut *gop.get() };
 
@@ -44,23 +41,29 @@ fn efi_main(_handle: Handle, st: SystemTable<Boot>) -> Status {
     }
 
     // load kernel file
-    let kernel = match load_kernel(&boot_services) {
+    let kernel_addr = match load_kernel(&bs) {
         Ok(kernel_addr) => kernel_addr,
         Err(s) => match s {
             Status::BUFFER_TOO_SMALL => {
-                writeln!(stdout, "Failed to load kernel: buffer too small");
+                writeln!(stdout, "Failed to load kernel: buffer too small").unwrap();
                 panic!();
             },
             Status::NOT_FOUND => {
-                writeln!(stdout, "Failed to load kernel: not found");
+                writeln!(stdout, "Failed to load kernel: not found").unwrap();
                 panic!();
             },
             _ => {
-                writeln!(stdout, "Failed to load kernel: unknown reason");
+                writeln!(stdout, "Failed to load kernel: unknown reason").unwrap();
                 panic!();
             },
         }
     };
+
+    let kernel_ehdr = unsafe { &*(kernel_addr as *mut [u8] as *mut Elf64Ehdr) };
+    if !kernel_ehdr.is_valid() {
+        writeln!(stdout, "Invalid ELF file").unwrap();
+        panic!();
+    }
 
     loop {}
 }
@@ -74,7 +77,7 @@ fn load_kernel(bs: &BootServices) -> Result<&'static mut [u8], Status> {
     };
     let simple_fs = unsafe { &mut *simple_fs.get() };
 
-    let rootdir = match simple_fs.open_volume() {
+    let mut rootdir = match simple_fs.open_volume() {
         Ok(rootdir) => rootdir.unwrap(),
         Err(e) => return Err(e.status()),
     };
