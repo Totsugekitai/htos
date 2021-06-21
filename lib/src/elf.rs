@@ -8,7 +8,7 @@ pub type Elf64_Xword = u64;
 pub type Elf64_Sxword = u64;
 
 #[repr(C)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Elf64_Ehdr {
     pub e_ident: [u8; 16],
     pub e_type: Elf64_Half,
@@ -26,8 +26,15 @@ pub struct Elf64_Ehdr {
     pub e_shstrndx: Elf64_Half,
 }
 
+impl Elf64_Ehdr {
+    pub fn is_valid(&self) -> bool {
+        const MAGIC: [u8; 4] = *b"\x7fELF";
+        self.e_ident[..3] == MAGIC
+    }
+}
+
 #[repr(C)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Elf64_Phdr {
     pub p_type: Elf64_Word,
     pub p_flags: Elf64_Word,
@@ -39,8 +46,12 @@ pub struct Elf64_Phdr {
     pub p_align: Elf64_Xword,
 }
 
+impl Elf64_Phdr {
+    
+}
+
 #[repr(C)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Elf64_Shdr {
     pub sh_name: Elf64_Word,
     pub sh_type: Elf64_Word,
