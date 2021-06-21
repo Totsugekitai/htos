@@ -28,14 +28,17 @@ OVMF = ./bios/RELEASEX64_OVMF.fd
 
 LOADER_NAME = htloader
 KERNEL_NAME = htkernel
+LIB_NAME = htlib
 
 TARGET_EFI = boot/target/$(EFI_ARCH)/release/$(LOADER_NAME).efi
-TARGET_KERNEL = kernel/target/$(KERNEL_ARCH)/release/$(KERNEL_NAME)
+TARGET_KERNEL = kernel/target/$(KERNEL_ARCH)/release/$(KERNEL_NAME).elf
 
-all: kernel boot
+.PHONY: all clean run install boot kernel lib
+
+all: kernel boot lib
 
 clean:
-> rm -rf kernel/target boot/target
+> rm -rf kernel/target boot/target lib/target $(MNT)
 
 run:
 > qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=fat:rw:$(MNT)
@@ -49,3 +52,6 @@ boot:
 
 kernel:
 > cd kernel; cargo build --release --target $(KERNEL_ARCH).json
+
+lib:
+> cd lib; cargo build --release
