@@ -57,16 +57,23 @@ impl Elf64Ehdr {
         }
     }
 
-    pub fn memset_segments(&self, head: &[u8]) -> Result<(), Error> {
-        for i in 0..self.e_phnum as u64 {
-            let phdr_offset = self.e_phoff + (self.e_phentsize as u64) * i;
-            unsafe {
-                let phdr = &*(head[phdr_offset as usize] as *const Elf64Phdr);
-                phdr.memset_segmemt(head)?;
-            }
-        }
-        Ok(())
-    }
+    //pub fn load_segments(&self, head: &[u8]) -> Result<(), Error> {
+    //    for i in 0..self.e_phnum as u64 {
+    //        let phdr_offset = self.e_phoff + (self.e_phentsize as u64) * i;
+    //        unsafe {
+    //            let phdr = &*(head[phdr_offset as usize] as *const Elf64Phdr);
+    //            phdr.load_segmemt(head)?;
+    //            //if let Err(e) = phdr.load_segmemt(head) {
+    //            //    use super::error::ErrorKind::*;
+    //            //    match e.kind {
+    //            //        NotFound => (),
+    //            //        _ => { return Err(e); }
+    //            //    }
+    //            //}
+    //        }
+    //    }
+    //    Ok(())
+    //}
 }
 
 #[repr(C)]
@@ -141,22 +148,27 @@ impl Elf64Phdr {
         true
     }
 
-    pub fn memset_segmemt(&self, head: &[u8]) -> Result<(), Error> {
+    pub fn load_segmemt(&self, head: &[u8]) -> Result<(), Error> {
+        use super::error::ErrorKind::*;
         if !self.is_valid() {
-            use super::error::ErrorKind::*;
             return Err(Error { kind: InvalidParameter });
         }
-        for i in 0..self.p_memsz {
-            let dst = self.p_vaddr + i;
-            unsafe {
-                *(dst as *mut u8) = if i < self.p_filesz {
-                    head[i as usize]
-                } else {
-                    0
-                };
-            }
+        match self.get_type() {
+            PhdrType::Load => {
+                for i in 0..self.p_memsz {
+                    let dst = self.p_vaddr + i;
+                    unsafe {
+                        *(dst as *mut u8) = if i < self.p_filesz {
+                            head[self.p_offset as usize + i as usize]
+                        } else {
+                            0
+                        };
+                    }
+                }
+                Ok(())
+            },
+            _ => Err(Error { kind: NotFound })
         }
-        Ok(())
     }
 }
 
