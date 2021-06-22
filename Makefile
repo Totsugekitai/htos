@@ -33,12 +33,14 @@ LIB_NAME = htlib
 TARGET_EFI = boot/target/$(EFI_ARCH)/release/$(LOADER_NAME).efi
 TARGET_KERNEL = kernel/target/$(KERNEL_ARCH)/release/$(KERNEL_NAME).elf
 
-.PHONY: all clean run install boot kernel lib
+.PHONY: default all clean run install boot kernel lib
 
-all: kernel boot lib
+default: lib kernel boot
 
 clean:
 > rm -rf kernel/target boot/target lib/target $(MNT)
+
+all: default install run
 
 run:
 > qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=fat:rw:$(MNT)
