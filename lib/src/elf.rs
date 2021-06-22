@@ -1,3 +1,5 @@
+use core::usize;
+
 use super::error::Error;
 
 pub type Elf64Addr = u64;
@@ -55,7 +57,16 @@ impl Elf64Ehdr {
         }
     }
 
-    //pub fn memset_segments(&self)
+    pub fn memset_segments(&self, head: &[u8]) -> Result<(), Error> {
+        for i in 0..self.e_phnum as u64 {
+            let phdr_offset = self.e_phoff + (self.e_phentsize as u64) * i;
+            unsafe {
+                let phdr = &*(head[phdr_offset as usize] as *const Elf64Phdr);
+                phdr.memset_segmemt(head)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 #[repr(C)]
@@ -111,14 +122,26 @@ impl Elf64Phdr {
         }
     }
 
+    pub fn is_valid_flag(&self) -> bool {
+        let out_of_bound_bits = 0xfffffff8;
+        if out_of_bound_bits & self.p_flags != 0 {
+            false
+        } else {
+            true
+        }
+    }
+
     pub fn is_valid(&self) -> bool {
         if let PhdrType::Unknown = self.get_type() {
+            return false;
+        }
+        if !self.is_valid_flag() {
             return false;
         }
         true
     }
 
-    pub fn memset_segmemt(&self, head: *mut [u8]) -> Result<(), Error> {
+    pub fn memset_segmemt(&self, head: &[u8]) -> Result<(), Error> {
         if !self.is_valid() {
             use super::error::ErrorKind::*;
             return Err(Error { kind: InvalidParameter });
@@ -127,8 +150,7 @@ impl Elf64Phdr {
             let dst = self.p_vaddr + i;
             unsafe {
                 *(dst as *mut u8) = if i < self.p_filesz {
-                    let src = ((head as *const u8 as u64) + i) as *const u8;
-                    *src
+                    head[i as usize]
                 } else {
                     0
                 };
