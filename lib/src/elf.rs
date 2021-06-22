@@ -1,3 +1,5 @@
+use super::error::Error;
+
 pub type Elf64Addr = u64;
 pub type Elf64Off = u64;
 pub type Elf64Half = u16;
@@ -7,8 +9,7 @@ pub type Elf64Xword = u64;
 pub type Elf64Sxword = u64;
 
 #[repr(C)]
-#[repr(packed)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Elf64Ehdr {
     pub e_ident: [u8; 16],
     pub e_type: Elf64Half,
@@ -28,12 +29,12 @@ pub struct Elf64Ehdr {
 
 #[derive(Debug)]
 pub enum ElfType {
-    NONE,
-    REL,
-    EXEC,
-    DYN,
-    CORE,
-    UNKNOWN,
+    None = 0,
+    Rel = 1,
+    Exec = 2,
+    Dyn = 3,
+    Core = 4,
+    Unknown,
 }
 
 impl Elf64Ehdr {
@@ -43,15 +44,18 @@ impl Elf64Ehdr {
     }
 
     pub fn elf_type(&self) -> ElfType {
+        use self::ElfType::*;
         match self.e_type {
-            0 => ElfType::NONE,
-            1 => ElfType::REL,
-            2 => ElfType::EXEC,
-            3 => ElfType::DYN,
-            4 => ElfType::CORE,
-            _ => ElfType::UNKNOWN,
+            0 => None,
+            1 => Rel,
+            2 => Exec,
+            3 => Dyn,
+            4 => Core,
+            _ => Unknown,
         }
     }
+
+    //pub fn memset_segments(&self)
 }
 
 #[repr(C)]
@@ -67,8 +71,71 @@ pub struct Elf64Phdr {
     pub p_align: Elf64Xword,
 }
 
+pub enum PhdrType {
+    Null = 0,
+    Load = 1,
+    Dynamic = 2,
+    Interp = 3,
+    Note = 4,
+    Shlib = 5,
+    Phdr = 6,
+    Tls = 7,
+    Loos = 0x60000000,
+    Hios = 0x6fffffff,
+    Loproc = 0x70000000,
+    Hiproc = 0x7fffffff,
+    GnuEhFrame = 0x6474e550,
+    GnuStack = 0x6474e551,
+    Unknown,
+}
+
 impl Elf64Phdr {
-    
+    pub fn get_type(&self) -> PhdrType {
+        use self::PhdrType::*;
+        match self.p_type {
+            0 => Null,
+            1 => Load,
+            2 => Dynamic,
+            3 => Interp,
+            4 => Note,
+            5 => Shlib,
+            6 => Phdr,
+            7 => Tls,
+            0x60000000 => Loos,
+            0x6fffffff => Hios,
+            0x70000000 => Loproc,
+            0x7fffffff => Hiproc,
+            0x6474e550 => GnuEhFrame,
+            0x6474e551 => GnuStack,
+            _ => Unknown,
+        }
+    }
+
+    pub fn is_valid(&self) -> bool {
+        if let PhdrType::Unknown = self.get_type() {
+            return false;
+        }
+        true
+    }
+
+    pub fn memset_segmemt(&self, head: *mut [u8]) -> Result<(), Error> {
+        if !self.is_valid() {
+            use super::error::ErrorKind::*;
+            return Err(Error { kind: InvalidParameter });
+        }
+        for i in 0..self.p_memsz {
+            let dst = self.p_vaddr + i;
+            unsafe {
+                *(dst as *mut u8) = if i < self.p_filesz {
+                    let src = ((head as *const u8 as u64) + i) as *const u8;
+                    *src
+                } else {
+                    0
+                };
+            }
+        }
+        Ok(())
+    }
 }
 
 #[repr(C)]
