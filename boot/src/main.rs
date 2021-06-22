@@ -6,8 +6,8 @@ use core::{fmt::Write, panic::PanicInfo};
 use uefi::prelude::*;
 use uefi::proto::console::gop::GraphicsOutput;
 use uefi::proto::media::{fs::SimpleFileSystem, file::*};
-use htlib::{boot::BootInfo, elf::*};
 use uefi::table::boot::MemoryType;
+use htlib::{boot::BootInfo, elf::*};
 
 #[entry]
 fn efi_main(_handle: Handle, st: SystemTable<Boot>) -> Status {
@@ -59,10 +59,29 @@ fn efi_main(_handle: Handle, st: SystemTable<Boot>) -> Status {
         }
     };
 
-    let kernel_ehdr = unsafe { &*(kernel_addr as *mut [u8] as *mut Elf64Ehdr) };
+    let kernel_ehdr = unsafe { &*(kernel_addr as *const [u8] as *const Elf64Ehdr) };
+
     if !kernel_ehdr.is_valid() {
         writeln!(stdout, "Invalid ELF file").unwrap();
         panic!();
+    } else {
+        writeln!(stdout, "Valid ELF file").unwrap();
+    }
+
+    if let Err(e) = kernel_ehdr.memset_segments(kernel_addr) {
+        use htlib::error::ErrorKind::*;
+        match e.kind {
+            InvalidParameter => {
+                writeln!(stdout, "Invalid segment parameter").unwrap();
+                panic!();
+            }
+            _ => {
+                writeln!(stdout, "Something error").unwrap();
+                panic!();
+            }
+        }
+    } else {
+        writeln!(stdout, "Set elf segments").unwrap();
     }
 
     loop {}
@@ -70,7 +89,7 @@ fn efi_main(_handle: Handle, st: SystemTable<Boot>) -> Status {
 
 const KERNEL_FILE: &str = "htkernel.elf";
 
-fn load_kernel(bs: &BootServices) -> Result<&'static mut [u8], Status> {
+fn load_kernel(bs: &BootServices) -> Result<&'static [u8], Status> {
     let simple_fs = match bs.locate_protocol::<SimpleFileSystem>() {
         Ok(simple_fs) => simple_fs.unwrap(),
         Err(e) => return Err(e.status()),
