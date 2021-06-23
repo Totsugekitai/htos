@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-uefi = { version = "0.11.0", features = ["exts", "alloc"] }
-uefi-services = "0.8.0"
+uefi = { version = "0.11.0" }
+#uefi-services = "0.8.0"
 rlibc = "1"
 htlib = { path = "../lib" }

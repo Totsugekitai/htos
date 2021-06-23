@@ -1,11 +1,11 @@
 #![no_std]
 #![no_main]
 #![feature(abi_efiapi)]
-#![feature(default_alloc_error_handler)]
+//#![feature(default_alloc_error_handler)]
 
-#[macro_use]
-extern crate alloc;
-extern crate rlibc;
+//#[macro_use]
+//extern crate alloc;
+//extern crate rlibc;
 
 use core::{fmt::Write, panic::PanicInfo};
 use uefi::prelude::*;
@@ -99,7 +99,7 @@ fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
     }
 
     let kernel_entry = unsafe {
-        core::mem::transmute::<u64, extern "C" fn(bi: &BootInfo)>(kernel_ehdr.e_entry)
+        core::mem::transmute::<u64, extern "sysv64" fn(bi: &BootInfo)>(kernel_ehdr.e_entry)
     };
 
     writeln!(stdout, "elf file addr: 0x{:x}", kernel_addr as *const [u8] as *const u8 as usize).unwrap();
@@ -112,10 +112,10 @@ fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
     }
 
     // exit boot services
-    let max_mmap_size = bs.memory_map_size() + 8 * core::mem::size_of::<MemoryDescriptor>();
-    let mut mmap_region = vec![0; max_mmap_size].into_boxed_slice();
-    let (_st, _it) = st.exit_boot_services(handle, &mut mmap_region)
-        .expect_success("Failed to boot services");
+    //let max_mmap_size = bs.memory_map_size() + 8 * core::mem::size_of::<MemoryDescriptor>();
+    //let mut mmap_region = vec![0; max_mmap_size].into_boxed_slice();
+    //let (_st, _it) = st.exit_boot_services(handle, &mut mmap_region)
+    //    .expect_success("Failed to boot services");
 
     // jump!!!
     kernel_entry(&boot_info);
