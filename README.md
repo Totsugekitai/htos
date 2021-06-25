@@ -7,4 +7,5 @@
 - [Methylenix](https://github.com/PG-MANA/Methylenix)
 - [blog_os](https://github.com/phil-opp/blog_os)
 - [mandarin](https://github.com/algon-320/mandarin)
+- [laranja-os](https://github.com/skoji/laranja-os)
 
