@@ -3,6 +3,7 @@
 
 use core::panic::PanicInfo;
 use htlib::boot::*;
+use htkernel::*;
 
 #[no_mangle]
 extern "C" fn kernel_entry(bi: &BootInfo) {
