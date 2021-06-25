@@ -2,7 +2,6 @@
 #![no_main]
 #![feature(abi_efiapi)]
 
-use core::panic;
 use core::{fmt::Write, panic::PanicInfo};
 use uefi::Status;
 use uefi::prelude::*;
@@ -105,10 +104,17 @@ fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
     }
 
     // exit boot services
-    //let max_mmap_size = bs.memory_map_size() + 8 * core::mem::size_of::<MemoryDescriptor>();
-    //let mut mmap_region = vec![0; max_mmap_size].into_boxed_slice();
-    //let (_st, _it) = st.exit_boot_services(handle, &mut mmap_region)
-    //    .expect_success("Failed to boot services");
+    let mmap_size = bs.memory_map_size() + core::mem::size_of::<MemoryDescriptor>() * 16;
+    let mmap_buf = match allocate(&bs, mmap_size) {
+        Ok(pool) => pool,
+        Err(_s) => {
+            writeln!(stdout, "Memory allocate error").unwrap();
+            panic!();
+        },
+    };
+    let mut mmap_buf = unsafe { core::slice::from_raw_parts_mut(mmap_buf, mmap_size) };
+    let (_st, _iter) = st.exit_boot_services(handle, &mut mmap_buf)
+        .expect_success("Failed to boot services");
 
     // jump!!!
     kernel_entry(&boot_info);
