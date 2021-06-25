@@ -56,24 +56,6 @@ impl Elf64Ehdr {
             _ => Unknown,
         }
     }
-
-    //pub fn load_segments(&self, head: &[u8]) -> Result<(), Error> {
-    //    for i in 0..self.e_phnum as u64 {
-    //        let phdr_offset = self.e_phoff + (self.e_phentsize as u64) * i;
-    //        unsafe {
-    //            let phdr = &*(head[phdr_offset as usize] as *const Elf64Phdr);
-    //            phdr.load_segmemt(head)?;
-    //            //if let Err(e) = phdr.load_segmemt(head) {
-    //            //    use super::error::ErrorKind::*;
-    //            //    match e.kind {
-    //            //        NotFound => (),
-    //            //        _ => { return Err(e); }
-    //            //    }
-    //            //}
-    //        }
-    //    }
-    //    Ok(())
-    //}
 }
 
 #[repr(C)]
