@@ -1,13 +1,10 @@
 #![no_std]
 #![no_main]
 #![feature(abi_efiapi)]
-//#![feature(default_alloc_error_handler)]
 
-//#[macro_use]
-//extern crate alloc;
-//extern crate rlibc;
-
+use core::panic;
 use core::{fmt::Write, panic::PanicInfo};
+use uefi::Status;
 use uefi::prelude::*;
 use uefi::proto::console::{gop::GraphicsOutput, text::Output};
 use uefi::proto::media::{fs::SimpleFileSystem, file::*};
@@ -87,10 +84,6 @@ fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
                 writeln!(stdout, "Invalid segment parameter").unwrap();
                 panic!();
             }
-            //NotFound => {
-            //    writeln!(stdout, "Not found LOAD segment").unwrap();
-            //    panic!();
-            //}
             _ => {
                 writeln!(stdout, "Something error").unwrap();
                 panic!();
@@ -119,8 +112,6 @@ fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
 
     // jump!!!
     kernel_entry(&boot_info);
-
-    //writeln!(stdout, "boot unreachable area").unwrap();
 
     Status::SUCCESS
 }
@@ -161,9 +152,9 @@ fn load_kernel(bs: &BootServices) -> Result<&'static [u8], Status> {
         return Err(e.status());
     };
 
-    let pool = match bs.allocate_pool(MemoryType::LOADER_DATA, kernel_file_size) {
-        Ok(pool) => pool.unwrap(),
-        Err(e) => return Err(e.status()),
+    let pool = match allocate(&bs, kernel_file_size) {
+        Ok(pool) => pool,
+        Err(s) => return Err(s),
     };
 
     let buf = unsafe { core::slice::from_raw_parts_mut(pool, kernel_file_size) };
@@ -175,24 +166,19 @@ fn load_kernel(bs: &BootServices) -> Result<&'static [u8], Status> {
     Ok(buf)
 }
 
+fn allocate(bs: &BootServices, size: usize) -> Result<*mut u8, Status> {
+     match bs.allocate_pool(MemoryType::LOADER_DATA, size) {
+        Ok(pool) => Ok(pool.unwrap()),
+        Err(e) => Err(e.status()),
+     }
+}
+
 pub fn load_segments(head: &[u8], so: &mut Output) -> Result<(), Error> {
     let ehdr = unsafe { &*(head as *const [u8] as *const Elf64Ehdr) };
     for i in 0..ehdr.e_phnum as u64 {
         let phdr_offset = ehdr.e_phoff + (ehdr.e_phentsize as u64) * i;
-        writeln!(so, "phdr_offset: {}", phdr_offset).unwrap();
-        writeln!(so, "e_phentsize: {}", ehdr.e_phentsize).unwrap();
         unsafe {
             let phdr = &*((head as *const [u8] as *const u8 as u64 + phdr_offset) as *const Elf64Phdr);
-            writeln!(so, "head: 0x{:x}", head as *const [u8] as *const u8 as u64).unwrap();
-            writeln!(so, "phdr: 0x{:x}", phdr as *const Elf64Phdr as u64).unwrap();
-            writeln!(so, "  Type: {:x}", phdr.p_type).unwrap();
-            writeln!(so, "  Flags: {}", phdr.p_flags).unwrap();
-            writeln!(so, "  Offset: {}", phdr.p_offset).unwrap();
-            writeln!(so, "  Vaddr: {}", phdr.p_vaddr).unwrap();
-            writeln!(so, "  Paddr: {}", phdr.p_paddr).unwrap();
-            writeln!(so, "  Memsz: {}", phdr.p_memsz).unwrap();
-            writeln!(so, "  Filesz: {}", phdr.p_filesz).unwrap();
-            writeln!(so, "  Align: {}", phdr.p_align).unwrap();
             if let Err(e) = phdr.load_segmemt(head) {
                 use htlib::error::ErrorKind::*;
                 match e.kind {
