@@ -5,7 +5,7 @@
 use core::{fmt::Write, panic::PanicInfo};
 use uefi::Status;
 use uefi::prelude::*;
-use uefi::proto::console::{gop::GraphicsOutput, text::Output};
+use uefi::proto::console::{gop::*, text::Output};
 use uefi::proto::media::{fs::SimpleFileSystem, file::*};
 use uefi::table::boot::{MemoryType, MemoryDescriptor};
 use htlib::{boot::*, elf::*, error::*};
@@ -35,6 +35,14 @@ fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
 
         let stride = mode_info.stride();
         boot_info.vram_stride = stride as u16;
+
+        let pixel_format = match mode_info.pixel_format() {
+            uefi::proto::console::gop::PixelFormat::Rgb => htlib::boot::PixelFormat::Rgb,
+            uefi::proto::console::gop::PixelFormat::Bgr => htlib::boot::PixelFormat::Bgr,
+            uefi::proto::console::gop::PixelFormat::Bitmask => htlib::boot::PixelFormat::Bitmask,
+            uefi::proto::console::gop::PixelFormat::BltOnly => htlib::boot::PixelFormat::BltOnly,
+        };
+        boot_info.pixel_format = pixel_format;
     } else {
         writeln!(stdout, "Failed to call GOP protocol").unwrap();
         panic!();
@@ -44,7 +52,7 @@ fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
     let vram_base = boot_info.vram_base;
     for i in 0..(boot_info.vram_width as u64 * boot_info.vram_height as u64) {
         let vram = (vram_base + i * 4) as *mut Pixel;
-        let pixel = Pixel { blue: 0x50, green: 0x50, red: 0, _reserved: 0 };
+        let pixel = Pixel { dot: [0x50, 0x50, 0, 0] };
         unsafe { core::ptr::write_volatile::<Pixel>(vram, pixel); }
     }
 
