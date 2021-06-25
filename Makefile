@@ -33,9 +33,9 @@ LIB_NAME = htlib
 TARGET_EFI = boot/target/$(EFI_ARCH)/release/$(LOADER_NAME).efi
 TARGET_KERNEL = kernel/target/$(KERNEL_ARCH)/release/$(KERNEL_NAME).elf
 
-.PHONY: default all clean run install boot kernel lib
+.PHONY: default all clean run install boot kernel
 
-default: lib kernel boot
+default: kernel boot
 
 clean:
 > rm -rf kernel/target boot/target lib/target $(MNT)
@@ -54,6 +54,3 @@ boot:
 
 kernel:
 > cd kernel; cargo build --release --target $(KERNEL_ARCH).json
-
-lib:
-> cd lib; cargo build --release
