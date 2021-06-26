@@ -1,5 +1,5 @@
-use htlib::boot::{Pixel, PixelFormat};
 use crate::fonts;
+use htlib::boot::*;
 
 #[repr(C)]
 struct FrameBuffer {
@@ -7,4 +7,10 @@ struct FrameBuffer {
     width: u64,
     height: u64,
     stride: u64,
+}
+
+impl FrameBuffer {
+    fn init(&self, bi: &BootInfo) {
+        self.base = core::mem::trbi.vram_base;
+    }
 }
