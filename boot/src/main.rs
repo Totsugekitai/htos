@@ -52,7 +52,7 @@ fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
     let vram_base = boot_info.vram_base;
     for i in 0..(boot_info.vram_width as u64 * boot_info.vram_height as u64) {
         let vram = (vram_base + i * 4) as *mut Pixel;
-        let pixel = Pixel { dot: [0x50, 0x50, 0, 0] };
+        let pixel = Pixel { dot: (0x50500000 as u32).to_be() };
         unsafe { core::ptr::write_volatile::<Pixel>(vram, pixel); }
     }
 
