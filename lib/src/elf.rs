@@ -86,6 +86,7 @@ pub enum PhdrType {
     Hiproc = 0x7fffffff,
     GnuEhFrame = 0x6474e550,
     GnuStack = 0x6474e551,
+    GnuRelRo = 0x6474e552,
     Unknown,
 }
 
@@ -107,6 +108,7 @@ impl Elf64Phdr {
             0x7fffffff => Hiproc,
             0x6474e550 => GnuEhFrame,
             0x6474e551 => GnuStack,
+            0x6474e552 => GnuRelRo,
             _ => Unknown,
         }
     }
