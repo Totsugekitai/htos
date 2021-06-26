@@ -9,6 +9,7 @@ pub struct BootInfo {
 }
 
 #[repr(u8)]
+#[derive(Copy, Clone)]
 pub enum PixelFormat {
     Rgb = 0,
     Bgr = 1,
@@ -22,6 +23,6 @@ impl Default for PixelFormat {
 
 #[repr(C)]
 pub struct Pixel {
-    pub dot: [u8; 4],
+    pub dot: u32,
 }
 
