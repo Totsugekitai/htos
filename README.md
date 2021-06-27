@@ -14,3 +14,7 @@
 ### font data
 
 - [liumos](https://github.com/hikalium/liumos)
+
+### global variables idea
+
+- [A Guide to Global Data in Rust](https://users.rust-lang.org/t/a-guide-to-global-data-in-rust/42574/13)
