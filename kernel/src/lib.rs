@@ -3,5 +3,5 @@
 
 pub mod thread;
 pub mod graphics;
-pub mod fonts;
+pub mod text;
 

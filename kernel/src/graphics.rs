@@ -98,9 +98,7 @@ impl FrameBuffer {
 
 impl GlobalData<FrameBuffer> for FrameBuffer {
     fn set(&mut self, value: FrameBuffer) {
-        *self = FrameBuffer {
-            ..value
-        };
+        *self = FrameBuffer { ..value };
     }
 }
 
