@@ -1,5 +1,7 @@
 # Hyper Toy Operating System
 
+WIP...
+
 ## Refecences
 
 ### main code
@@ -15,6 +17,6 @@
 
 - [liumos](https://github.com/hikalium/liumos)
 
-### global variables idea
+### mutex idea & code
 
-- [A Guide to Global Data in Rust](https://users.rust-lang.org/t/a-guide-to-global-data-in-rust/42574/13)
+- [spin-rs](https://github.com/mvdnes/spin-rs)
