@@ -1,7 +1,6 @@
 use core::mem::MaybeUninit;
 
 use htlib::boot::*;
-use super::thread::main::*;
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -23,6 +22,9 @@ pub enum Color {
     Green = 0x00ff0000,
     Blue  = 0x0000ff00,
 }
+
+unsafe impl Send for FrameBuffer {}
+unsafe impl Sync for FrameBuffer {}
 
 impl FrameBuffer {
     pub const fn new() -> Self {

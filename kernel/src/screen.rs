@@ -1,6 +1,6 @@
 use htlib::boot::BootInfo;
+use htlib::mutex::SpinMutex;
 use crate::graphics::{Color, FrameBuffer};
-use crate::thread::main::{GlobalData, MainThreadRefCell};
 
 pub enum WriteError {
     LineFeed,
@@ -16,20 +16,15 @@ pub struct Writer {
     pub fb: FrameBuffer,
 }
 
+unsafe impl Send for Writer {}
+unsafe impl Sync for Writer {}
+
 impl Writer {
     pub const fn new() -> Self {
         Self {
             position: (0, 0),
             cb: [[0; SCREEN_WIDTH]; SCREEN_HEIGHT],
             fb: FrameBuffer::new(),
-        }
-    }
-
-    pub fn from_boot_info(b: &BootInfo) -> Self {
-        Self {
-            position: (0, 0),
-            cb: [[0; SCREEN_WIDTH]; SCREEN_HEIGHT],
-            fb: FrameBuffer::from_boot_info(b),
         }
     }
 
@@ -83,13 +78,14 @@ impl Writer {
     }
 }
 
-impl GlobalData<Writer> for Writer {
-    fn set(&mut self, value: Writer) {
-        *self = Writer { ..value };
-    }
-}
+pub static WRITER: SpinMutex<Writer> = SpinMutex::new(Writer::new());
 
-pub static WRITER: MainThreadRefCell<Writer> = MainThreadRefCell::new(Writer::new());
+pub fn init_writer(boot_info: &BootInfo) {
+    let mut writer = WRITER.lock();
+    writer.fb = FrameBuffer::from_boot_info(boot_info);
+    writer.fb.write_background(Color::Black);
+    writer.write_byte(b'K', Color::White);
+}
 
 fn get_font(c: u8) -> &'static [u8; 16] {
     &FONTS[c as usize]
