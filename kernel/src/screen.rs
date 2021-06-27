@@ -1,3 +1,5 @@
+use core::fmt::Write;
+
 use htlib::boot::BootInfo;
 use htlib::mutex::SpinMutex;
 use crate::graphics::{Color, FrameBuffer};
@@ -39,10 +41,26 @@ impl Writer {
                     Err(WriteError::UnknownChar)
                 } else {
                     self.write_char(c, color);
+                    self.position.0 += 1;
                     Ok(())
                 }
             }
         }
+    }
+
+    pub fn write_string(&mut self, s: &str, color: Color) -> Result<(), WriteError> {
+        for byte in s.bytes() {
+            match self.write_byte(byte, color) {
+                Ok(_) => (),
+                Err(e) => {
+                    match e {
+                        WriteError::LineFeed => (),
+                        WriteError::UnknownChar => return Err(WriteError::UnknownChar),
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     fn newline(&mut self) {
@@ -78,13 +96,41 @@ impl Writer {
     }
 }
 
+impl Write for Writer {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        match self.write_string(s, Color::White) {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                match e {
+                    WriteError::LineFeed => Ok(()),
+                    WriteError::UnknownChar => Err(core::fmt::Error {}),
+                }
+            }
+        }
+    }
+}
+
 pub static WRITER: SpinMutex<Writer> = SpinMutex::new(Writer::new());
 
 pub fn init_writer(boot_info: &BootInfo) {
     let mut writer = WRITER.lock();
     writer.fb = FrameBuffer::from_boot_info(boot_info);
     writer.fb.write_background(Color::Black);
-    writer.write_byte(b'K', Color::White);
+}
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::screen::_print(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+pub fn _print(args: core::fmt::Arguments) {
+    WRITER.lock().write_fmt(args).unwrap();
 }
 
 fn get_font(c: u8) -> &'static [u8; 16] {
