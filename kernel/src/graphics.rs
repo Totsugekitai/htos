@@ -95,11 +95,3 @@ impl FrameBuffer {
         core::ptr::write_volatile(&mut buffer[x + y * self.stride], pixel);
     }
 }
-
-impl GlobalData<FrameBuffer> for FrameBuffer {
-    fn set(&mut self, value: FrameBuffer) {
-        *self = FrameBuffer { ..value };
-    }
-}
-
-pub static FRAME_BUFFER: MainThreadRefCell<FrameBuffer> = MainThreadRefCell::new(FrameBuffer::new());
