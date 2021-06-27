@@ -10,7 +10,7 @@ pub enum WriteError {
 }
 
 const SCREEN_WIDTH: usize = 80;
-const SCREEN_HEIGHT: usize = 24;
+const SCREEN_HEIGHT: usize = 24 + 1;
 
 pub struct Writer {
     position: (usize, usize),
@@ -30,7 +30,7 @@ impl Writer {
         }
     }
 
-    pub fn write_byte(&mut self, c: u8, color: Color) -> Result<(), WriteError> {
+    fn write_byte(&mut self, c: u8, color: Color) -> Result<(), WriteError> {
         match c {
             b'\n' => {
                 self.newline();
@@ -40,7 +40,11 @@ impl Writer {
                 if c > 0x7f {
                     Err(WriteError::UnknownChar)
                 } else {
-                    self.write_char(c, color);
+                    if self.position.0 >= SCREEN_WIDTH {
+                        self.newline();
+                    }
+                    self.cb[self.position.1][self.position.0] = c;
+                    self.write_ascii(c, color);
                     self.position.0 += 1;
                     Ok(())
                 }
@@ -48,7 +52,7 @@ impl Writer {
         }
     }
 
-    pub fn write_string(&mut self, s: &str, color: Color) -> Result<(), WriteError> {
+    fn write_string(&mut self, s: &str, color: Color) -> Result<(), WriteError> {
         for byte in s.bytes() {
             match self.write_byte(byte, color) {
                 Ok(_) => (),
@@ -66,18 +70,25 @@ impl Writer {
     fn newline(&mut self) {
         self.position.0 = 0;
         self.position.1 += 1;
-        let (_, y) = self.position;
-        if y > SCREEN_HEIGHT {
-            self.position.1 = SCREEN_HEIGHT;
+        if self.position.1 >= SCREEN_HEIGHT {
+            self.position.1 = SCREEN_HEIGHT - 1;
+            self.screen_reload();
         }
-        self.screen_newline();
     }
 
-    fn screen_newline(&mut self) {
-        // TODO
+    fn screen_reload(&mut self) {
+        for i in 1..SCREEN_HEIGHT {
+            self.cb[i - 1] = self.cb[i];
+        }
+        self.cb[SCREEN_HEIGHT - 1] = [0; SCREEN_WIDTH];
+        for y in 0..SCREEN_HEIGHT {
+            for x in 0..SCREEN_WIDTH {
+                let _ = self.write_ascii_with_position(self.cb[y][x], x, y, Color::White);
+            }
+        }
     }
 
-    fn write_char(&mut self, c: u8, color: Color) {
+    fn write_ascii(&mut self, c: u8, color: Color) {
         let font_data = get_font(c);
         let mut column = 0;
         for line in font_data {
@@ -85,6 +96,24 @@ impl Writer {
                 let dot = (line << row) & 0b10000000;
                 let xpos = self.position.0 * 8 + row;
                 let ypos = self.position.1 * 16 + column;
+                if dot == 0b10000000 {
+                    self.fb.write(xpos, ypos, color);
+                } else {
+                    self.fb.write(xpos, ypos, Color::Black);
+                }
+            }
+            column += 1;
+        }
+    }
+
+    fn write_ascii_with_position(&mut self, c: u8, x: usize, y: usize, color: Color) {
+        let font_data = get_font(c);
+        let mut column = 0;
+        for line in font_data {
+            for row in 0..8 {
+                let dot = (line << row) & 0b10000000;
+                let xpos = x * 8 + row;
+                let ypos = y * 16 + column;
                 if dot == 0b10000000 {
                     self.fb.write(xpos, ypos, color);
                 } else {

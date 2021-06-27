@@ -9,12 +9,13 @@ use htlib::boot::*;
 #[no_mangle]
 extern "C" fn kernel_entry(boot_info: &BootInfo) {
     init_writer(boot_info);
-    println!("Numbers are {} and {}", 42, 1.0/3.0);
+    println!("Hello, HTOS!");
 
     loop {}
 }
 
 #[panic_handler]
 fn panic(_: &PanicInfo) -> ! {
+    println!("panic!");
     loop {}
 }
