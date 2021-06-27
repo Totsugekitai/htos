@@ -1,13 +1,16 @@
+use core::mem::MaybeUninit;
+
 use htlib::boot::*;
+use super::thread::main::*;
 
 #[repr(C)]
-#[derive(Default)]
+#[derive(Clone, Copy)]
 pub struct FrameBuffer {
-    base: &'static mut [Pixel],
-    width: usize,
-    height: usize,
-    stride: usize,
-    pixel_format: PixelFormat,
+    pub base: MaybeUninit<*mut Pixel>,
+    pub width: usize,
+    pub height: usize,
+    pub stride: usize,
+    pub pixel_format: PixelFormat,
 }
 
 #[repr(u32)]
@@ -22,12 +25,24 @@ pub enum Color {
 }
 
 impl FrameBuffer {
-    pub fn init(&mut self, bi: &BootInfo) {
-        self.base = unsafe { core::slice::from_raw_parts_mut(bi.vram_base as *mut Pixel, bi.vram_width as usize * bi.vram_height as usize) };
-        self.width = bi.vram_width as usize;
-        self.height = bi.vram_height as usize;
-        self.stride = bi.vram_stride as usize;
-        self.pixel_format = bi.pixel_format;
+    pub const fn new() -> Self {
+        Self {
+            base: MaybeUninit::uninit(),
+            width: 0,
+            height: 0,
+            stride: 0,
+            pixel_format: PixelFormat::Rgb,
+        }
+    }
+
+    pub fn from_boot_info(bi: &BootInfo) -> Self {
+        Self {
+            base: MaybeUninit::new(bi.vram_base as *mut Pixel),
+            width: bi.vram_width as usize,
+            height: bi.vram_height as usize,
+            stride: bi.vram_stride as usize,
+            pixel_format: bi.pixel_format,
+        }
     }
 
     pub fn write_background(&mut self, color: Color) {
@@ -75,6 +90,18 @@ impl FrameBuffer {
     }
 
     unsafe fn write_pixel(&mut self, x: usize, y: usize, pixel: Pixel) {
-        core::ptr::write_volatile(&mut self.base[x + y * self.stride], pixel);
+        let buffer = self.base.assume_init();
+        let buffer = core::slice::from_raw_parts_mut(buffer, self.width * self.height);
+        core::ptr::write_volatile(&mut buffer[x + y * self.stride], pixel);
     }
 }
+
+impl GlobalData<FrameBuffer> for FrameBuffer {
+    fn set(&mut self, value: FrameBuffer) {
+        *self = FrameBuffer {
+            ..value
+        };
+    }
+}
+
+pub static FRAME_BUFFER: MainThreadRefCell<FrameBuffer> = MainThreadRefCell::new(FrameBuffer::new());
