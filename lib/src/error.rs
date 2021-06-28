@@ -4,7 +4,9 @@ pub struct Error {
 
 impl Default for Error {
     fn default() -> Self {
-        Error { kind: ErrorKind::NotSupported }
+        Error {
+            kind: ErrorKind::NotSupported,
+        }
     }
 }
 

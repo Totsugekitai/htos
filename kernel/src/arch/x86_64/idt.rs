@@ -1,5 +1,5 @@
-use core::marker::PhantomData;
 use core::fmt::*;
+use core::marker::PhantomData;
 
 #[derive(Clone, Debug)]
 #[repr(C)]
@@ -39,7 +39,8 @@ pub struct InterruptDescriptorOptions(u16);
 
 pub type HandlerFunc = extern "x86-interrupt" fn(InterruptStackFrame);
 pub type HandlerFuncWithErrCode = extern "x86-interrupt" fn(InterruptStackFrame, error_code: u64);
-pub type PageFaultHandlerFunc = extern "x86-interrupt" fn(InterruptStackFrame, error_code: PageFaultErrorCode);
+pub type PageFaultHandlerFunc =
+    extern "x86-interrupt" fn(InterruptStackFrame, error_code: PageFaultErrorCode);
 
 #[derive(Clone)]
 #[repr(C)]

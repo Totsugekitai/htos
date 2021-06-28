@@ -1,5 +1,3 @@
-use core::usize;
-
 use super::error::Error;
 
 pub type Elf64Addr = u64;
@@ -135,7 +133,9 @@ impl Elf64Phdr {
     pub fn load_segmemt(&self, head: &[u8]) -> Result<(), Error> {
         use super::error::ErrorKind::*;
         if !self.is_valid() {
-            return Err(Error { kind: InvalidParameter });
+            return Err(Error {
+                kind: InvalidParameter,
+            });
         }
         match self.get_type() {
             PhdrType::Load => {
@@ -150,8 +150,8 @@ impl Elf64Phdr {
                     }
                 }
                 Ok(())
-            },
-            _ => Err(Error { kind: NotFound })
+            }
+            _ => Err(Error { kind: NotFound }),
         }
     }
 }

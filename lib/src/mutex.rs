@@ -1,8 +1,10 @@
 // This code is mostly based on spin-rs(https://github.com/mvdnes/spin-rs)
 
-use core::ops::{Deref, DerefMut};
 use core::cell::UnsafeCell;
+use core::ops::{Deref, DerefMut};
 use core::sync::atomic::{AtomicBool, Ordering};
+
+use super::arch::x86_64;
 
 pub struct SpinMutex<T: ?Sized> {
     lock: AtomicBool,
@@ -38,10 +40,14 @@ impl<T: ?Sized> SpinMutex<T> {
     }
 
     pub fn lock(&self) -> SpinMutexGuard<T> {
-        while self.lock.compare_exchange_weak(false, true, Ordering::Acquire, Ordering::Relaxed).is_err() {
+        while self
+            .lock
+            .compare_exchange_weak(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_err()
+        {
             while self.is_locked() {
                 //arch_loop();
-                loop {}
+                x86_64::nop();
             }
         }
 
@@ -52,7 +58,11 @@ impl<T: ?Sized> SpinMutex<T> {
     }
 
     pub fn try_lock(&self) -> Option<SpinMutexGuard<T>> {
-        if self.lock.compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed).is_ok() {
+        if self
+            .lock
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_ok()
+        {
             Some(SpinMutexGuard {
                 lock: &self.lock,
                 data: unsafe { &mut *self.data.get() },
@@ -88,4 +98,3 @@ impl<'a, T: ?Sized> Drop for SpinMutexGuard<'a, T> {
 
 unsafe impl<T: ?Sized + Send> Send for SpinMutex<T> {}
 unsafe impl<T: ?Sized + Send> Sync for SpinMutex<T> {}
-

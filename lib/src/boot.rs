@@ -18,11 +18,12 @@ pub enum PixelFormat {
 }
 
 impl Default for PixelFormat {
-    fn default() -> Self { PixelFormat::Bgr }
+    fn default() -> Self {
+        PixelFormat::Bgr
+    }
 }
 
 #[repr(C)]
 pub struct Pixel {
     pub dot: u32,
 }
-

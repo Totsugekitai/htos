@@ -18,9 +18,9 @@ pub struct FrameBuffer {
 pub enum Color {
     Black = 0x00000000,
     White = 0xffffff00,
-    Red   = 0xff000000,
+    Red = 0xff000000,
     Green = 0x00ff0000,
-    Blue  = 0x0000ff00,
+    Blue = 0x0000ff00,
 }
 
 unsafe impl Send for FrameBuffer {}
@@ -57,8 +57,12 @@ impl FrameBuffer {
 
     pub fn write(&mut self, x: usize, y: usize, color: Color) {
         match self.pixel_format {
-            PixelFormat::Rgb => { self.write_rgb(x, y, color); },
-            PixelFormat::Bgr => { self.write_bgr(x, y, color); },
+            PixelFormat::Rgb => {
+                self.write_rgb(x, y, color);
+            }
+            PixelFormat::Bgr => {
+                self.write_bgr(x, y, color);
+            }
             _ => (),
         }
     }
@@ -66,11 +70,51 @@ impl FrameBuffer {
     fn write_rgb(&mut self, x: usize, y: usize, color: Color) {
         use Color::*;
         match color {
-            Black => { unsafe { self.write_pixel(x, y, Pixel { dot: (color as u32).to_be() }); } },
-            White => { unsafe { self.write_pixel(x, y, Pixel { dot: (color as u32).to_be() }); } },
-            Red   => { unsafe { self.write_pixel(x, y, Pixel { dot: (color as u32).to_be() }); } },
-            Green => { unsafe { self.write_pixel(x, y, Pixel { dot: (color as u32).to_be() }); } },
-            Blue  => { unsafe { self.write_pixel(x, y, Pixel { dot: (color as u32).to_be() }); } },
+            Black => unsafe {
+                self.write_pixel(
+                    x,
+                    y,
+                    Pixel {
+                        dot: (color as u32).to_be(),
+                    },
+                );
+            },
+            White => unsafe {
+                self.write_pixel(
+                    x,
+                    y,
+                    Pixel {
+                        dot: (color as u32).to_be(),
+                    },
+                );
+            },
+            Red => unsafe {
+                self.write_pixel(
+                    x,
+                    y,
+                    Pixel {
+                        dot: (color as u32).to_be(),
+                    },
+                );
+            },
+            Green => unsafe {
+                self.write_pixel(
+                    x,
+                    y,
+                    Pixel {
+                        dot: (color as u32).to_be(),
+                    },
+                );
+            },
+            Blue => unsafe {
+                self.write_pixel(
+                    x,
+                    y,
+                    Pixel {
+                        dot: (color as u32).to_be(),
+                    },
+                );
+            },
         }
     }
 
@@ -83,11 +127,21 @@ impl FrameBuffer {
         let bgr_array = [blue, green, red, 0];
         let bgr = unsafe { core::mem::transmute::<[u8; 4], u32>(bgr_array) };
         match color {
-            Black => { unsafe { self.write_pixel(x, y, Pixel { dot: bgr }); } },
-            White => { unsafe { self.write_pixel(x, y, Pixel { dot: bgr }); } },
-            Red   => { unsafe { self.write_pixel(x, y, Pixel { dot: bgr }); } },
-            Green => { unsafe { self.write_pixel(x, y, Pixel { dot: bgr }); } },
-            Blue  => { unsafe { self.write_pixel(x, y, Pixel { dot: bgr }); } },
+            Black => unsafe {
+                self.write_pixel(x, y, Pixel { dot: bgr });
+            },
+            White => unsafe {
+                self.write_pixel(x, y, Pixel { dot: bgr });
+            },
+            Red => unsafe {
+                self.write_pixel(x, y, Pixel { dot: bgr });
+            },
+            Green => unsafe {
+                self.write_pixel(x, y, Pixel { dot: bgr });
+            },
+            Blue => unsafe {
+                self.write_pixel(x, y, Pixel { dot: bgr });
+            },
         }
     }
 
