@@ -1,2 +1,2 @@
 [workspace]
-members = ["htloader", "htlib", "htkernel"]
+members = ["boot", "lib", "kernel"]

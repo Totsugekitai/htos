@@ -30,15 +30,15 @@ LOADER_NAME = htloader
 KERNEL_NAME = htkernel
 LIB_NAME = htlib
 
-TARGET_EFI = boot/target/$(EFI_ARCH)/release/$(LOADER_NAME).efi
-TARGET_KERNEL = kernel/target/$(KERNEL_ARCH)/release/$(KERNEL_NAME).elf
+TARGET_EFI = target/$(EFI_ARCH)/release/$(LOADER_NAME).efi
+TARGET_KERNEL = target/$(KERNEL_ARCH)/release/$(KERNEL_NAME).elf
 
 .PHONY: default all clean run install boot kernel
 
 default: kernel boot
 
 clean:
-> rm -rf kernel/target boot/target lib/target $(MNT)
+> rm -rf target $(MNT)
 
 all: default install run
 
