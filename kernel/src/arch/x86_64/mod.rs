@@ -1,1 +1,1 @@
-pub mod idt;
+pub mod interrupts;

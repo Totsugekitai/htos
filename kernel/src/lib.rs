@@ -1,7 +1,9 @@
 #![no_std]
+#![feature(asm)]
 #![feature(const_fn_trait_bound)]
 #![feature(abi_x86_interrupt)]
 #![feature(lang_items)]
+#![feature(const_fn_fn_ptr_basics)]
 
 #[macro_use]
 extern crate bitflags;

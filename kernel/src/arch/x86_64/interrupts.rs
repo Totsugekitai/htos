@@ -1,5 +1,8 @@
+use crate::println;
+use bit_field::BitField;
 use core::fmt::*;
 use core::marker::PhantomData;
+use htlib::mutex::*;
 
 #[derive(Clone, Debug)]
 #[repr(C)]
@@ -32,7 +35,7 @@ pub struct InterruptDescriptorTable {
     user_defined: [InterruptDescriptor<HandlerFunc>; 256 - 32],
 }
 
-impl InterruptDescriptor {
+impl InterruptDescriptorTable {
     pub const fn new() -> InterruptDescriptorTable {
         InterruptDescriptorTable {
             divide_error: InterruptDescriptor::missing(),
@@ -62,6 +65,30 @@ impl InterruptDescriptor {
             user_defined: [InterruptDescriptor::missing(); 256 - 32],
         }
     }
+
+    pub fn pointer(&self) -> DescriptorTablePointer {
+        DescriptorTablePointer {
+            limit: (core::mem::size_of::<Self>() - 1) as u16,
+            base: self as *const _ as u64,
+        }
+    }
+
+    pub fn load(&self) {
+        let aptr = IDT.as_mut_ptr();
+        let ptr = &self.pointer();
+        println!("{:x}", ptr as *const _ as u64);
+        println!("limit: {:x}, base: {:x}", ptr.limit, ptr.base);
+        println!("{:x}", aptr as u64);
+        unsafe {
+            asm!("lidt [{}]", in(reg) ptr);
+        }
+    }
+}
+
+#[repr(C, packed)]
+pub struct DescriptorTablePointer {
+    pub limit: u16,
+    pub base: u64,
 }
 
 #[derive(Clone, Copy)]
@@ -88,7 +115,29 @@ impl<F> InterruptDescriptor<F> {
             phantom_func: PhantomData,
         }
     }
+
+    pub fn set_handler_addr(&mut self, addr: u64) -> &mut InterruptDescriptorOptions {
+        self.func_ptr_low = addr as u16;
+        self.func_ptr_mid = (addr >> 16) as u16;
+        self.func_ptr_high = (addr >> 32) as u32;
+        self.gdt_selector = 0; // TODO
+        self.options.set_present(true)
+    }
 }
+
+macro_rules! impl_set_handler_fn {
+    ($f:ty) => {
+        impl InterruptDescriptor<$f> {
+            pub fn set_handler_fn(&mut self, handler: $f) -> &mut InterruptDescriptorOptions {
+                self.set_handler_addr(handler as u64)
+            }
+        }
+    };
+}
+
+impl_set_handler_fn!(HandlerFunc);
+impl_set_handler_fn!(HandlerFuncWithErrCode);
+impl_set_handler_fn!(PageFaultHandlerFunc);
 
 impl<F> Debug for InterruptDescriptor<F> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
@@ -102,12 +151,17 @@ impl<F> Debug for InterruptDescriptor<F> {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct InterruptDescriptorOptions(u16);
 
 impl InterruptDescriptorOptions {
     const fn minimal() -> Self {
         InterruptDescriptorOptions(0b1110_0000_0000)
+    }
+
+    pub fn set_present(&mut self, present: bool) -> &mut Self {
+        self.0.set_bit(15, present);
+        self
     }
 }
 
@@ -142,5 +196,32 @@ bitflags! {
         const USER_MODE = 1 << 2;
         const MALFORMED_TABLE = 1 << 3;
         const INSTRUCTION_FETCH = 1 << 4;
+    }
+}
+
+static IDT: SpinMutex<InterruptDescriptorTable> = SpinMutex::new(InterruptDescriptorTable::new());
+
+pub fn init_idt() {
+    println!("{:x}", &IDT as *const _ as u64);
+    let mut idt = IDT.lock();
+
+    idt.divide_error.set_handler_fn(breakpoint_handler);
+    idt.debug.set_handler_fn(breakpoint_handler);
+    idt.non_maskable_interrupt
+        .set_handler_fn(breakpoint_handler);
+    idt.breakpoint.set_handler_fn(breakpoint_handler);
+    idt.overflow.set_handler_fn(breakpoint_handler);
+    idt.bound_range_exceeded.set_handler_fn(breakpoint_handler);
+
+    idt.load();
+}
+
+extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
+    println!("EXCEPTION: BREAKPOINT\n{:?}", stack_frame);
+}
+
+pub fn int3() {
+    unsafe {
+        asm!("int3");
     }
 }
