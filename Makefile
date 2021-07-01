@@ -45,10 +45,15 @@ all: default install run
 
 debug-all: boot debug-kernel debug-install debug-run
 
+debug-all-stop: boot debug-kernel debug-install debug-stop
+
 run:
 > qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=fat:rw:$(MNT)
 
 debug-run:
+> qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=fat:rw:$(MNT) -gdb tcp::1234 -monitor telnet::5556,server,nowait
+
+debug-stop:
 > qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=fat:rw:$(MNT) -S -gdb tcp::1234 -monitor telnet::5556,server,nowait
 
 install:
