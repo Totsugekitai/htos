@@ -11,3 +11,10 @@ pub fn nop() {
         asm!("nop");
     }
 }
+
+#[inline]
+pub fn int3() {
+    unsafe {
+        asm!("int3");
+    }
+}

@@ -5,7 +5,7 @@ use core::panic::PanicInfo;
 use htkernel::arch::x86_64::interrupts;
 use htkernel::println;
 use htkernel::screen::init_writer;
-use htlib::arch::x86_64::halt;
+use htlib::arch::x86_64;
 use htlib::boot::*;
 
 #[no_mangle]
@@ -15,9 +15,7 @@ extern "C" fn kernel_entry(boot_info: &BootInfo) {
     interrupts::init_idt();
     println!("init IDT");
 
-    //halt();
-
-    interrupts::int3();
+    x86_64::int3();
 
     loop {}
 }
