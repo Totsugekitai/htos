@@ -10,6 +10,7 @@ edition = "2018"
 htlib = { path = "../lib" }
 flags = "0.1.5"
 bit_field = "0.10.1"
+x86_64 = "0.14.3"
 
 [profile.release]
 panic = "abort"

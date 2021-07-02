@@ -5,7 +5,6 @@
 #![feature(lang_items)]
 #![feature(const_fn_fn_ptr_basics)]
 
-#[macro_use]
 extern crate bitflags;
 
 pub mod graphics;
