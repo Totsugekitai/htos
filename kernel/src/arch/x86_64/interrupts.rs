@@ -17,6 +17,8 @@ pub fn init_idt() {
     idt.bound_range_exceeded
         .set_handler_fn(bound_range_exceeded_handler);
 
+    idt.double_fault.set_handler_fn(double_fault_handler);
+
     unsafe {
         idt.load_unsafe();
     }
@@ -49,5 +51,13 @@ extern "x86-interrupt" fn overflow_handler(stack_frame: InterruptStackFrame) {
 
 extern "x86-interrupt" fn bound_range_exceeded_handler(stack_frame: InterruptStackFrame) {
     println!("EXCEPTION: BOUND_RANGE_EXCEEDED\n{:#?}", stack_frame);
+    loop {}
+}
+
+extern "x86-interrupt" fn double_fault_handler(
+    stack_frame: InterruptStackFrame,
+    _error_code: u64,
+) -> ! {
+    println!("EXCEPTION: DOUBLE_FAULT\n{:#?}", stack_frame);
     loop {}
 }
