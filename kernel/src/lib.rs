@@ -7,10 +7,17 @@
 
 extern crate bitflags;
 
+use htlib::boot::BootInfo;
+
 pub mod graphics;
 pub mod screen;
 
 pub mod arch;
+
+pub fn init(boot_info: &BootInfo) {
+    screen::init_writer(boot_info);
+    arch::x86_64::interrupts::init_idt();
+}
 
 #[lang = "eh_personality"]
 extern "C" fn eh_personality() {}

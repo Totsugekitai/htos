@@ -25,39 +25,32 @@ pub fn init_idt() {
 }
 
 extern "x86-interrupt" fn divide_error_handler(stack_frame: InterruptStackFrame) {
-    println!("EXCEPTION: DIVIDE_ERROR\n{:#?}", stack_frame);
-    loop {}
+    panic!("EXCEPTION: DIVIDE_ERROR\n{:#?}", stack_frame);
 }
 
 extern "x86-interrupt" fn debug_handler(stack_frame: InterruptStackFrame) {
-    println!("EXCEPTION: DEBUG\n{:#?}", stack_frame);
-    loop {}
+    panic!("EXCEPTION: DEBUG\n{:#?}", stack_frame);
 }
 
 extern "x86-interrupt" fn non_maskable_interrupt_handler(stack_frame: InterruptStackFrame) {
     println!("EXCEPTION: NON_MASKABLE_INTERRUPT\n{:#?}", stack_frame);
-    loop {}
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
-    loop {}
 }
 
 extern "x86-interrupt" fn overflow_handler(stack_frame: InterruptStackFrame) {
-    println!("EXCEPTION: OVERFLOW\n{:#?}", stack_frame);
-    loop {}
+    panic!("EXCEPTION: OVERFLOW\n{:#?}", stack_frame);
 }
 
 extern "x86-interrupt" fn bound_range_exceeded_handler(stack_frame: InterruptStackFrame) {
-    println!("EXCEPTION: BOUND_RANGE_EXCEEDED\n{:#?}", stack_frame);
-    loop {}
+    panic!("EXCEPTION: BOUND_RANGE_EXCEEDED\n{:#?}", stack_frame);
 }
 
 extern "x86-interrupt" fn double_fault_handler(
     stack_frame: InterruptStackFrame,
     _error_code: u64,
 ) -> ! {
-    println!("EXCEPTION: DOUBLE_FAULT\n{:#?}", stack_frame);
-    loop {}
+    panic!("EXCEPTION: DOUBLE_FAULT\n{:#?}", stack_frame);
 }
