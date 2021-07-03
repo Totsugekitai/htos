@@ -1,9 +1,10 @@
 use crate::println;
-use htlib::mutex::*;
+use htlib::mutex::Mutex;
 
+use super::gdt;
 use x86_64::structures::idt::*;
 
-static IDT: SpinMutex<InterruptDescriptorTable> = SpinMutex::new(InterruptDescriptorTable::new());
+static IDT: Mutex<InterruptDescriptorTable> = Mutex::new(InterruptDescriptorTable::new());
 
 pub fn init_idt() {
     let mut idt = IDT.lock();
@@ -17,15 +18,16 @@ pub fn init_idt() {
     idt.bound_range_exceeded
         .set_handler_fn(bound_range_exceeded_handler);
 
-    idt.double_fault.set_handler_fn(double_fault_handler);
-
     unsafe {
+        idt.double_fault
+            .set_handler_fn(double_fault_handler)
+            .set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
         idt.load_unsafe();
     }
 }
 
 extern "x86-interrupt" fn divide_error_handler(stack_frame: InterruptStackFrame) {
-    panic!("EXCEPTION: DIVIDE_ERROR\n{:#?}", stack_frame);
+    panic!("EXCEPTION: DIVIDE ERROR\n{:#?}", stack_frame);
 }
 
 extern "x86-interrupt" fn debug_handler(stack_frame: InterruptStackFrame) {
@@ -33,7 +35,7 @@ extern "x86-interrupt" fn debug_handler(stack_frame: InterruptStackFrame) {
 }
 
 extern "x86-interrupt" fn non_maskable_interrupt_handler(stack_frame: InterruptStackFrame) {
-    println!("EXCEPTION: NON_MASKABLE_INTERRUPT\n{:#?}", stack_frame);
+    println!("EXCEPTION: NON MASKABLE INTERRUPT\n{:#?}", stack_frame);
 }
 
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
@@ -45,12 +47,12 @@ extern "x86-interrupt" fn overflow_handler(stack_frame: InterruptStackFrame) {
 }
 
 extern "x86-interrupt" fn bound_range_exceeded_handler(stack_frame: InterruptStackFrame) {
-    panic!("EXCEPTION: BOUND_RANGE_EXCEEDED\n{:#?}", stack_frame);
+    panic!("EXCEPTION: BOUND RANGE EXCEEDED\n{:#?}", stack_frame);
 }
 
 extern "x86-interrupt" fn double_fault_handler(
     stack_frame: InterruptStackFrame,
     _error_code: u64,
 ) -> ! {
-    panic!("EXCEPTION: DOUBLE_FAULT\n{:#?}", stack_frame);
+    panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
 }

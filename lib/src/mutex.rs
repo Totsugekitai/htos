@@ -6,6 +6,9 @@ use core::sync::atomic::{AtomicBool, Ordering};
 
 use super::arch::x86_64;
 
+pub type Mutex<T> = SpinMutex<T>;
+pub type MutexGuard<'a, T> = SpinMutexGuard<'a, T>;
+
 pub struct SpinMutex<T: ?Sized> {
     lock: AtomicBool,
     data: UnsafeCell<T>,

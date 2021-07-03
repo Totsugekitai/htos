@@ -16,6 +16,7 @@ pub mod arch;
 
 pub fn init(boot_info: &BootInfo) {
     screen::init_writer(boot_info);
+    arch::x86_64::gdt::init();
     arch::x86_64::interrupts::init_idt();
 }
 

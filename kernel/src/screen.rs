@@ -2,7 +2,7 @@ use core::fmt::Write;
 
 use crate::graphics::{Color, FrameBuffer};
 use htlib::boot::BootInfo;
-use htlib::mutex::SpinMutex;
+use htlib::mutex::Mutex;
 
 pub enum WriteError {
     LineFeed,
@@ -135,7 +135,7 @@ impl Write for Writer {
     }
 }
 
-pub static WRITER: SpinMutex<Writer> = SpinMutex::new(Writer::new());
+pub static WRITER: Mutex<Writer> = Mutex::new(Writer::new());
 
 pub fn init_writer(boot_info: &BootInfo) {
     let mut writer = WRITER.lock();
