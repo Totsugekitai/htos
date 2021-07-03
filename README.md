@@ -20,3 +20,7 @@ WIP...
 ### mutex idea & code
 
 - [spin-rs](https://github.com/mvdnes/spin-rs)
+
+### memory model
+
+- [en.cppreference.com](https://en.cppreference.com/w/cpp/atomic/memory_order)
