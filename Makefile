@@ -34,6 +34,13 @@ TARGET_EFI = target/$(EFI_ARCH)/release/$(LOADER_NAME).efi
 TARGET_KERNEL = target/$(KERNEL_ARCH)/release/$(KERNEL_NAME).elf
 TARGET_KERNEL_DEBUG = target/$(KERNEL_ARCH)/debug/$(KERNEL_NAME).elf
 
+QEMU_ARGS = \
+  -bios $(OVMF) \
+  -drive format=raw,file=fat:rw:$(MNT) \
+  -device nec-usb-xhci,id=xhci -device usb-kbd
+
+QEMU_DEBUG_ARGS = -gdb tcp::1234 -monitor telnet::5556,server,nowait
+
 .PHONY: default all clean run install boot kernel debug-all debug-install debug-run debug-kernel
 
 default: kernel boot
@@ -43,18 +50,18 @@ clean:
 
 all: default install run
 
-debug-all: boot debug-kernel debug-install debug-run
+debug-all: debug-boot debug-kernel debug-install debug-run
 
-debug-all-stop: boot debug-kernel debug-install debug-stop
+debug-all-stop: debug-boot debug-kernel debug-install debug-stop
 
 run:
-> qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=fat:rw:$(MNT)
+> qemu-system-x86_64 $(QEMU_ARGS)
 
 debug-run:
-> qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=fat:rw:$(MNT) -gdb tcp::1234 -monitor telnet::5556,server,nowait
+> qemu-system-x86_64 $(QEMU_ARGS) $(QEMU_DEBUG_ARGS)
 
 debug-stop:
-> qemu-system-x86_64 -bios $(OVMF) -drive format=raw,file=fat:rw:$(MNT) -S -gdb tcp::1234 -monitor telnet::5556,server,nowait
+> qemu-system-x86_64 $(QEMU_ARGS) -S $(QEMU_DEBUG_ARGS)
 
 install:
 > ./dl_ovmf.sh
@@ -66,6 +73,9 @@ debug-install:
 
 boot:
 > cd boot; cargo build --release
+
+debug-boot:
+> cd boot; cargo build
 
 kernel:
 > cd kernel; cargo build --release --target $(KERNEL_ARCH).json
