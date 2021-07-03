@@ -155,7 +155,10 @@ macro_rules! println {
 }
 
 pub fn _print(args: core::fmt::Arguments) {
-    WRITER.lock().write_fmt(args).unwrap();
+    use x86_64::instructions::interrupts;
+    interrupts::without_interrupts(|| {
+        WRITER.lock().write_fmt(args).unwrap();
+    });
 }
 
 fn get_font(c: u8) -> &'static [u8; 16] {

@@ -4,7 +4,8 @@ use core::cell::UnsafeCell;
 use core::ops::{Deref, DerefMut};
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use super::arch::x86_64;
+//use super::arch::x86_64;
+use x86_64;
 
 pub type Mutex<T> = SpinMutex<T>;
 pub type MutexGuard<'a, T> = SpinMutexGuard<'a, T>;
@@ -50,7 +51,7 @@ impl<T: ?Sized> SpinMutex<T> {
         {
             while self.is_locked() {
                 //arch_loop();
-                x86_64::nop();
+                x86_64::instructions::nop();
             }
         }
 
