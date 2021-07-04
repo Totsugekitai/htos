@@ -115,12 +115,12 @@ fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
     writeln!(stdout, "kernel entry: 0x{:x}", kernel_entry as usize).unwrap();
 
     // for debug
-    for i in 0..100 {
-        let a = kernel_entry as u64;
-        unsafe {
-            write!(stdout, "{:x} ", *((a + i) as *const u8)).unwrap();
-        }
-    }
+    //for i in 0..100 {
+    //    let a = kernel_entry as u64;
+    //    unsafe {
+    //        write!(stdout, "{:x} ", *((a + i) as *const u8)).unwrap();
+    //    }
+    //}
 
     // exit boot services
     let mmap_size = bs.memory_map_size() + core::mem::size_of::<MemoryDescriptor>() * 16;
