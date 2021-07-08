@@ -18,6 +18,7 @@ pub fn init(boot_info: &BootInfo) {
     screen::init_writer(boot_info);
     arch::x86_64::gdt::init();
     arch::x86_64::interrupts::init_idt();
+    arch::x86_64::paging::init_kernel_page_table();
 }
 
 #[lang = "eh_personality"]
