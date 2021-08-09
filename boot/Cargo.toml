@@ -9,4 +9,5 @@ edition = "2018"
 [dependencies]
 uefi = "0.11.0"
 rlibc = "1"
+x86_64 = "0.14.3"
 htlib = { path = "../lib" }
