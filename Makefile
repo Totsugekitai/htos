@@ -44,7 +44,6 @@ export RELEASE ?=
 export ARCH ?= x64
 
 kernel_target_json := kernel/arch/$(ARCH)/$(ARCH).json
-#boot_target := x86_64-unknown-uefi
 build_mode := $(if $(RELEASE),release,debug)
 
 export RUSTFLAGS = -Z emit-stack-sizes
@@ -63,8 +62,8 @@ build-kernel:
 build-boot:
 > $(CARGO) build $(CARGOFLAGS) --target $(EFI_ARCH) --manifest-path boot/Cargo.toml
 
-#clean:
-#> rm -rf target $(MNT)
+clean:
+> rm -rf target $(MNT) iso *.iso *.img *.map
 #
 #all: default install run
 #
