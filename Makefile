@@ -62,15 +62,15 @@ build-kernel:
 build-boot:
 > $(CARGO) build $(CARGOFLAGS) --target $(EFI_ARCH) --manifest-path boot/Cargo.toml
 
+.PHONY: clean
 clean:
 > rm -rf target $(MNT) iso *.iso *.img *.map
-#
-#all: default install run
-#
-#debug-all: debug-boot debug-kernel debug-install debug-run
-#
-#debug-all-stop: debug-boot debug-kernel debug-install debug-stop
-#
+
+.PHONY: iso
+iso: install
+> sudo ./make_bootable_disk.sh
+
+.PHONY: run
 run:
 > qemu-system-x86_64 $(QEMU_ARGS)
 #
@@ -79,23 +79,11 @@ run:
 #
 #debug-stop:
 #> qemu-system-x86_64 $(QEMU_ARGS) -S $(QEMU_DEBUG_ARGS)
-#
+
+.PHONY: install
 install:
 > ./dl_ovmf.sh
 > ./install.sh $(TARGET_EFI) $(TARGET_KERNEL)
-#
-#debug-install:
-#> ./dl_ovmf.sh
-#> ./install.sh $(TARGET_EFI) $(TARGET_KERNEL_DEBUG)
-#
-#boot:
-#> cd boot; cargo build --release
-#
-#debug-boot:
-#> cd boot; cargo build
-#
-#kernel:
-#> cd kernel; cargo build --release --target $(KERNEL_ARCH).json
-#
-#debug-kernel:
-#> cd kernel; cargo build --target $(KERNEL_ARCH).json
+
+.PHONY: all
+all: build install iso run
