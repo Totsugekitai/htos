@@ -3,3 +3,7 @@ Cargo.lock
 */target
 /bios
 /mnt
+/iso
+*.img
+*.iso
+*.map
