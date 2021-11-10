@@ -1,5 +1,4 @@
 ### Makefile_template ###
-
 # don't use TAB
 .RECIPEPREFIX = >
 # change shell to bash
@@ -14,14 +13,14 @@ MAKEFLAGS += --warn-undefined-variables
 .DELETE_ON_ERROR:
 # delete implicit rules
 MAKEFLAGS += -r
+MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 
 # MAKEFILE_DIR is directory Makefile located in
 MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-
 ### Makefile_template end ###
 
 EFI_ARCH = x86_64-unknown-uefi
-KERNEL_ARCH = x86_64-unknown-none
+KERNEL_ARCH = x64
 
 MNT = mnt
 OVMF = ./bios/RELEASEX64_OVMF.fd
@@ -41,44 +40,63 @@ QEMU_ARGS = \
 
 QEMU_DEBUG_ARGS = -gdb tcp::1234 -monitor telnet::5556,server,nowait
 
-.PHONY: default all clean run install boot kernel debug-all debug-install debug-run debug-kernel
+export RELEASE ?=
+export ARCH ?= x64
 
-default: kernel boot
+kernel_target_json := kernel/arch/$(ARCH)/$(ARCH).json
+#boot_target := x86_64-unknown-uefi
+build_mode := $(if $(RELEASE),release,debug)
 
-clean:
-> rm -rf target $(MNT)
+export RUSTFLAGS = -Z emit-stack-sizes
+CARGO ?= cargo +nightly
+CARGOFLAGS += -Z build-std=core,alloc -Z build-std-features=compiler-builtins-mem
+CARGOFLAGS += $(if $(RELEASE),--release,)
 
-all: default install run
+.PHONY: build
+build: build-kernel build-boot
 
-debug-all: debug-boot debug-kernel debug-install debug-run
+.PHONY: build-kernel
+build-kernel:
+> $(CARGO) build $(CARGOFLAGS) --target $(kernel_target_json) --manifest-path kernel/Cargo.toml
 
-debug-all-stop: debug-boot debug-kernel debug-install debug-stop
+.PHONY: build-boot
+build-boot:
+> $(CARGO) build $(CARGOFLAGS) --target $(EFI_ARCH) --manifest-path boot/Cargo.toml
 
+#clean:
+#> rm -rf target $(MNT)
+#
+#all: default install run
+#
+#debug-all: debug-boot debug-kernel debug-install debug-run
+#
+#debug-all-stop: debug-boot debug-kernel debug-install debug-stop
+#
 run:
 > qemu-system-x86_64 $(QEMU_ARGS)
-
-debug-run:
-> qemu-system-x86_64 $(QEMU_ARGS) $(QEMU_DEBUG_ARGS)
-
-debug-stop:
-> qemu-system-x86_64 $(QEMU_ARGS) -S $(QEMU_DEBUG_ARGS)
-
+#
+#debug-run:
+#> qemu-system-x86_64 $(QEMU_ARGS) $(QEMU_DEBUG_ARGS)
+#
+#debug-stop:
+#> qemu-system-x86_64 $(QEMU_ARGS) -S $(QEMU_DEBUG_ARGS)
+#
 install:
 > ./dl_ovmf.sh
 > ./install.sh $(TARGET_EFI) $(TARGET_KERNEL)
-
-debug-install:
-> ./dl_ovmf.sh
-> ./install.sh $(TARGET_EFI) $(TARGET_KERNEL_DEBUG)
-
-boot:
-> cd boot; cargo build --release
-
-debug-boot:
-> cd boot; cargo build
-
-kernel:
-> cd kernel; cargo build --release --target $(KERNEL_ARCH).json
-
-debug-kernel:
-> cd kernel; cargo build --target $(KERNEL_ARCH).json
+#
+#debug-install:
+#> ./dl_ovmf.sh
+#> ./install.sh $(TARGET_EFI) $(TARGET_KERNEL_DEBUG)
+#
+#boot:
+#> cd boot; cargo build --release
+#
+#debug-boot:
+#> cd boot; cargo build
+#
+#kernel:
+#> cd kernel; cargo build --release --target $(KERNEL_ARCH).json
+#
+#debug-kernel:
+#> cd kernel; cargo build --target $(KERNEL_ARCH).json

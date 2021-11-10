@@ -1,2 +1,11 @@
 [workspace]
 members = ["boot", "lib", "kernel"]
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
+lto = true
+debug = 1
+incremental = false
+debug-assertions = false
+overflow-checks = false

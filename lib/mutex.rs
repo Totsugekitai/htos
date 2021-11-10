@@ -4,7 +4,6 @@ use core::cell::UnsafeCell;
 use core::ops::{Deref, DerefMut};
 use core::sync::atomic::{AtomicBool, Ordering};
 
-//use super::arch::x86_64;
 use x86_64;
 
 pub type Mutex<T> = SpinMutex<T>;
@@ -76,9 +75,9 @@ impl<T: ?Sized> SpinMutex<T> {
         }
     }
 
-    pub unsafe fn force_unlock(&self) {
-        self.lock.load(Ordering::Release);
-    }
+    // pub unsafe fn force_unlock(&self) {
+    //     self.lock.load(Ordering::Release);
+    // }
 }
 
 impl<'a, T: ?Sized> Deref for SpinMutexGuard<'a, T> {

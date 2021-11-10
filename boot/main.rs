@@ -14,7 +14,7 @@ use uefi::Status;
 fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
     let stdout = st.stdout();
     stdout.reset(false).expect_success("Failed to reset STDOUT");
-    writeln!(stdout, "Hello, UEFI!").unwrap_or_else(|_| panic!());
+    writeln!(stdout, "Hello, UEFI!").unwrap();
 
     let mut boot_info: BootInfo = Default::default();
 
@@ -47,18 +47,6 @@ fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
         writeln!(stdout, "Failed to call GOP protocol").unwrap();
         panic!();
     }
-
-    // test frame buffer
-    //let vram_base = boot_info.vram_base;
-    //for i in 0..(boot_info.vram_width as u64 * boot_info.vram_height as u64) {
-    //    let vram = (vram_base + i * 4) as *mut Pixel;
-    //    let pixel = Pixel {
-    //        dot: (0x50500000 as u32).to_be(),
-    //    };
-    //    unsafe {
-    //        core::ptr::write_volatile::<Pixel>(vram, pixel);
-    //    }
-    //}
 
     // load kernel file
     let kernel_addr = match load_kernel(&bs) {
@@ -113,14 +101,6 @@ fn efi_main(handle: Handle, st: SystemTable<Boot>) -> Status {
     )
     .unwrap();
     writeln!(stdout, "kernel entry: 0x{:x}", kernel_entry as usize).unwrap();
-
-    // for debug
-    //for i in 0..100 {
-    //    let a = kernel_entry as u64;
-    //    unsafe {
-    //        write!(stdout, "{:x} ", *((a + i) as *const u8)).unwrap();
-    //    }
-    //}
 
     // exit boot services
     let mmap_size = bs.memory_map_size() + core::mem::size_of::<MemoryDescriptor>() * 16;

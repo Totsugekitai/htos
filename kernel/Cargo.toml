@@ -2,15 +2,14 @@
 name = "htkernel"
 version = "0.1.0"
 authors = ["Totsugekitai <37617413+Totsugekitai@users.noreply.github.com>"]
-edition = "2018"
+edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "htkernel"
+path = "main.rs"
 
 [dependencies]
 htlib = { path = "../lib" }
 flags = "0.1.5"
 bit_field = "0.10.1"
 x86_64 = "0.14.3"
-
-[profile.release]
-panic = "abort"
