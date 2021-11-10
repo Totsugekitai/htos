@@ -35,7 +35,7 @@ TARGET_KERNEL_DEBUG = target/$(KERNEL_ARCH)/debug/$(KERNEL_NAME).elf
 
 QEMU_ARGS = \
   -bios $(OVMF) \
-  -drive format=raw,file=fat:rw:$(MNT) \
+  -cdrom htos.iso \
   -device nec-usb-xhci,id=xhci -device usb-kbd
 
 QEMU_DEBUG_ARGS = -gdb tcp::1234 -monitor telnet::5556,server,nowait
